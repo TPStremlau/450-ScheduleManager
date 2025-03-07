@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "724275837877",
+    "project_id": "scheduling-assistant-csc450",
+    "storage_bucket": "scheduling-assistant-csc450.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:724275837877:android:160261d3edd8ec6624b7fc",
+        "android_client_info": {
+          "package_name": "com.example.final_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBee9XYik8RAlwzeq9ictelHrJ7QK22Dgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
