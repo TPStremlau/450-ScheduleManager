@@ -1,5 +1,6 @@
 import 'package:final_project/sign_in.dart';
 import 'package:final_project/text_field.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 
@@ -9,8 +10,10 @@ class LoginPage extends StatelessWidget {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
-  void signUserIn() {
-    // Add authentication logic here
+  void signUserIn() async {
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: usernameController.text, 
+      password: passwordController.text);
   }
 
   @override
@@ -66,7 +69,8 @@ class LoginPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 25),
 
-                MyButton(onTap: signUserIn)         
+                MyButton(
+                  onTap: signUserIn)         
               ],
             ),
           ),
