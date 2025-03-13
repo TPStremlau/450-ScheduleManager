@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'views/day_view.dart';
 import 'views/month_view.dart';
 import 'views/year_view.dart';
-
+import 'views/event_set.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  HomePageState createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   String selectedView = "Day"; // Default view is Day View
   DateTime currentDate = DateTime.now(); // Track current month and year
 
@@ -74,7 +74,7 @@ class _HomePageState extends State<HomePage> {
             right: 16.0,
             child: ElevatedButton(
               onPressed: () {
-                // The button currently does nothing
+                EventScreenState().showEventPopup(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.yellow, // Yellow color for the button
@@ -104,38 +104,38 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-// Build buttons
-ElevatedButton _buildGridButton({
-  required BuildContext context,
-  required String label,
-  required VoidCallback onPressed,
-  Icon? icon,
-}) {
-  return ElevatedButton(
-    onPressed: onPressed,
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.blue,
-      elevation: 5,
-      shadowColor: Colors.black,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (icon != null) icon,
-        const SizedBox(width: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+  // Build buttons
+  ElevatedButton _buildGridButton({
+    required BuildContext context,
+    required String label,
+    required VoidCallback onPressed,
+    Icon? icon,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+        elevation: 5,
+        shadowColor: Colors.black,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
         ),
-      ],
-    ),
-  );
-}
-
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (icon != null) icon,
+          const SizedBox(width: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
