@@ -75,6 +75,27 @@ class EventScreenState extends State<EventScreen> {
                       },
                     ),
 
+                    // Time Picker
+                    ListTile(
+                      title: Text(
+                        selectedTime == null
+                            ? "Select Time(Required)"
+                            : "Time: ${selectedTime!.format(context)}",
+                      ),
+                      trailing: Icon(Icons.access_time),
+                      onTap: () async {
+                        final TimeOfDay? picked = await showTimePicker(
+                          context: context,
+                          initialTime: selectedTime ?? TimeOfDay.now(),
+                        );
+                        if (picked != null && picked != selectedTime) {
+                          setState(() {
+                            selectedTime = picked;
+                          });
+                        }
+                      },
+                    ),
+
                     // Checkbox for Notifications
                     CheckboxListTile(
                       title: Text("Enable Notifications"),
@@ -90,15 +111,14 @@ class EventScreenState extends State<EventScreen> {
                     if (notificationsEnabled)
                       DropdownButton<int>(
                         value: notificationTimeBefore,
-                        items:
-                            [5, 10, 15, 30, 60]
-                                .map(
-                                  (e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text("$e minutes before"),
-                                  ),
-                                )
-                                .toList(),
+                        items: [5, 10, 15, 30, 60]
+                            .map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text("$e minutes before"),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (value) {
                           setState(() {
                             notificationTimeBefore = value!;
