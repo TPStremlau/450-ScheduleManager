@@ -4,13 +4,13 @@ import 'month_view.dart';
 
 // Stateful widget for Year View
 class YearViewPage extends StatefulWidget {
-  const YearViewPage({Key? key}) : super(key: key);
+  const YearViewPage({super.key});
 
   @override
-  _YearViewPageState createState() => _YearViewPageState();
+  YearViewPageState createState() => YearViewPageState();
 }
 
-class _YearViewPageState extends State<YearViewPage> {
+class YearViewPageState extends State<YearViewPage> {
   DateTime currentDate = DateTime.now(); // Track current year
 
   // Function to update the year
@@ -91,7 +91,7 @@ class _YearViewPageState extends State<YearViewPage> {
 class MonthViewPage extends StatelessWidget {
   final DateTime date;
 
-  const MonthViewPage({Key? key, required this.date}) : super(key: key);
+  const MonthViewPage({super.key, required this.date});
 
   @override
   Widget build(BuildContext context) {

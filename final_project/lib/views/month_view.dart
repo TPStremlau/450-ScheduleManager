@@ -81,13 +81,11 @@ Widget buildMonthView(DateTime selectedDate) {
 class DayViewPage extends StatelessWidget {
   final DateTime date;
 
-  const DayViewPage({Key? key, required this.date}) : super(key: key);
+  const DayViewPage({super.key, required this.date});
 
   @override
   Widget build(BuildContext context) {
-    // Format the date
-    String formattedDate = DateFormat('MMMM d, yyyy').format(date);
-
+    
     return Scaffold(
       appBar: AppBar(title: Text("")),
       body: buildDayView(date), // Call _buildDayView from the imported file
