@@ -111,14 +111,15 @@ class EventScreenState extends State<EventScreen> {
                     if (notificationsEnabled)
                       DropdownButton<int>(
                         value: notificationTimeBefore,
-                        items: [5, 10, 15, 30, 60]
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text("$e minutes before"),
-                              ),
-                            )
-                            .toList(),
+                        items:
+                            [5, 10, 15, 30, 60]
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text("$e minutes before"),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             notificationTimeBefore = value!;
