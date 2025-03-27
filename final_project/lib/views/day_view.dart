@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -22,41 +23,50 @@ class _DayViewState extends State<DayView> {
   }
 
   Future<void> fetchEvents() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      // Get events for the selected date 
-      String formattedDate = DateFormat('yyyy-MM-dd').format(widget.date);
-      QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
-          .collection('events')
-          .where('date', isEqualTo: formattedDate)
-          .get();
-
-      Map<int, List<Map<String, dynamic>>> tempEventsByHour = {};
-
-      for (var doc in eventSnapshot.docs) {
-        Map<String, dynamic> eventData = doc.data() as Map<String, dynamic>;
-        DateTime eventDateTime = DateTime.parse(eventData['dateTime']).toLocal();
-        int eventHour = eventDateTime.hour;
-
-        if (!tempEventsByHour.containsKey(eventHour)) {
-          tempEventsByHour[eventHour] = [];
-        }
-        tempEventsByHour[eventHour]!.add(eventData);
-      }
-  //set the state each time we get new events
-      setState(() {
-        eventsByHour = tempEventsByHour;
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Error fetching events: $e');
+  setState(() => _isLoading = true);
+  
+  try {
+    // Get current user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // Handle case where user is not logged in
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading events: ${e.toString()}')), //show errors
-      );
+      return;
     }
+
+    // Get events for the selected date 
+    String formattedDate = DateFormat('yyyy-MM-dd').format(widget.date);
+    QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
+        .collection('events')
+        .where('createdBy', isEqualTo: user.uid)  // Use user.uid instead of UserCredential
+        .where('date', isEqualTo: formattedDate)
+        .get();
+
+    Map<int, List<Map<String, dynamic>>> tempEventsByHour = {};
+
+    for (var doc in eventSnapshot.docs) {
+      Map<String, dynamic> eventData = doc.data() as Map<String, dynamic>;
+      DateTime eventDateTime = DateTime.parse(eventData['dateTime']).toLocal();
+      int eventHour = eventDateTime.hour;
+
+      if (!tempEventsByHour.containsKey(eventHour)) {
+        tempEventsByHour[eventHour] = [];
+      }
+      tempEventsByHour[eventHour]!.add(eventData);
+    }
+
+    setState(() {
+      eventsByHour = tempEventsByHour;
+      _isLoading = false;
+    });
+  } catch (e) {
+    debugPrint('Error fetching events: $e');
+    setState(() => _isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error loading events: ${e.toString()}')),
+    );
   }
+}
 //build each hour so we can have unlimited events per hour
   Widget _buildHourTile(int hour) {
     String timeLabel = DateFormat.jm().format(DateTime(0, 0, 0, hour));
