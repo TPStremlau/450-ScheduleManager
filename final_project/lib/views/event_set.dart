@@ -1,4 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class EventScreen extends StatefulWidget {
   const EventScreen({super.key});
@@ -10,17 +15,17 @@ class EventScreen extends StatefulWidget {
 class EventScreenState extends State<EventScreen> {
   void showEventPopup(BuildContext context) {
     DateTime? selectedDate;
-    TimeOfDay? selectedTime;
+    TimeOfDay? selectedTime = TimeOfDay.now();
     TextEditingController eventNameController = TextEditingController();
     TextEditingController eventNotesController = TextEditingController();
     bool notificationsEnabled = false;
-    int notificationTimeBefore = 5; // Default 5 minutes before
+    int notificationTimeBefore = 5;
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             "New Event",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
           ),
@@ -30,38 +35,31 @@ class EventScreenState extends State<EventScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      "Please enter the info below",
-                      style: TextStyle(fontSize: 15),
-                    ),
-                    // Event Name
+                    const Text("Please enter the info below", 
+                        style: TextStyle(fontSize: 15)),
+                    
                     TextField(
                       controller: eventNameController,
-                      decoration: InputDecoration(
-                        labelText: "Event Name(Required)",
-                      ),
+                      decoration: const InputDecoration(
+                          labelText: "Event Name (Required)"),
                     ),
 
-                    // Event Notes
                     TextField(
                       controller: eventNotesController,
-                      decoration: InputDecoration(
-                        labelText: "Event Notes(Optional)",
-                      ),
+                      decoration: const InputDecoration(
+                          labelText: "Event Notes (Optional)"),
                       maxLines: 2,
                     ),
 
-                    // Date Picker
                     ListTile(
                       title: Text(
                         selectedDate == null
-                            ? "Select Date(Required)"
-                            : "Date: ${selectedDate!.toLocal()}".split(' ')[0],
+                            ? "Select Date (Required)"
+                            : "Date: ${DateFormat('MMM d, yyyy').format(selectedDate!)}",
                       ),
-                      trailing: Icon(Icons.calendar_today),
+                      trailing: const Icon(Icons.calendar_today),
                       onTap: () async {
                         DateTime? pickedDate = await showDatePicker(
-                          // https://api.flutter.dev/flutter/material/showDatePicker.html
                           context: context,
                           initialDate: DateTime.now(),
                           firstDate: DateTime(2020),
@@ -75,20 +73,19 @@ class EventScreenState extends State<EventScreen> {
                       },
                     ),
 
-                    // Time Picker
                     ListTile(
                       title: Text(
                         selectedTime == null
-                            ? "Select Time(Required)"
+                            ? "Select Time (Required)"
                             : "Time: ${selectedTime!.format(context)}",
                       ),
-                      trailing: Icon(Icons.access_time),
+                      trailing: const Icon(Icons.access_time),
                       onTap: () async {
                         final TimeOfDay? picked = await showTimePicker(
                           context: context,
                           initialTime: selectedTime ?? TimeOfDay.now(),
                         );
-                        if (picked != null && picked != selectedTime) {
+                        if (picked != null) {
                           setState(() {
                             selectedTime = picked;
                           });
@@ -96,9 +93,8 @@ class EventScreenState extends State<EventScreen> {
                       },
                     ),
 
-                    // Checkbox for Notifications
                     CheckboxListTile(
-                      title: Text("Enable Notifications"),
+                      title: const Text("Enable Notifications"),
                       value: notificationsEnabled,
                       onChanged: (value) {
                         setState(() {
@@ -107,17 +103,13 @@ class EventScreenState extends State<EventScreen> {
                       },
                     ),
 
-                    // Notification Time Picker
                     if (notificationsEnabled)
                       DropdownButton<int>(
                         value: notificationTimeBefore,
                         items: [5, 10, 15, 30, 60]
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text("$e minutes before"),
-                              ),
-                            )
+                            .map((e) => DropdownMenuItem(
+                                value: e, 
+                                child: Text("$e minutes before")))
                             .toList(),
                         onChanged: (value) {
                           setState(() {
@@ -126,7 +118,6 @@ class EventScreenState extends State<EventScreen> {
                         },
                       ),
 
-                    // Save / Cancel Buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -136,32 +127,55 @@ class EventScreenState extends State<EventScreen> {
                           },
                           style: ButtonStyle(
                             backgroundColor: WidgetStateProperty.all(
-                              Colors.blue.shade100,
-                            ),
+                                Colors.blue.shade100),
                           ),
-                          child: Text(
+                          child: const Text(
                             "Cancel",
                             style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
+                                color: Colors.black, 
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                         ElevatedButton(
-                          onPressed: () {
-                            //placeholder for firebase stuff
+                          onPressed: () async {
+                            if (eventNameController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Event name is required')),
+                              );
+                              return;
+                            }
+                            if (selectedDate == null || selectedTime == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Date and time are required')),
+                              );
+                              return;
+                            }
+                            
+                            await saveEventToFirestore(
+                              eventNameController.text,
+                              eventNotesController.text,
+                              selectedDate,
+                              selectedTime,
+                              notificationsEnabled,
+                              notificationTimeBefore,
+                            );
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Event saved successfully')),
+                            );
                           },
                           style: ButtonStyle(
                             backgroundColor: WidgetStateProperty.all(
-                              Colors.blue.shade100,
-                            ),
+                                Colors.blue.shade100),
                           ),
-                          child: Text(
+                          child: const Text(
                             "Save",
                             style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
+                                color: Colors.black, 
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -176,15 +190,54 @@ class EventScreenState extends State<EventScreen> {
     );
   }
 
-  //useless code not needed ignore
+  Future<void> saveEventToFirestore(
+    String eventName,
+    String eventNotes,
+    DateTime? date,
+    TimeOfDay? time,
+    bool notificationsEnabled,
+    int notificationTimeBefore,
+  ) async {
+    if (eventName.isEmpty || date == null || time == null) {
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    // Combine Date and Time correctly
+    DateTime eventDateTime = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+
+    final eventData = {
+      'eventName': eventName,
+      'eventNotes': eventNotes,
+      'dateTime': eventDateTime.toUtc().toIso8601String(),
+      'date': DateFormat('yyyy-MM-dd').format(eventDateTime), // Added this line
+      'notificationsEnabled': notificationsEnabled,
+      'notificationTimeBefore': notificationsEnabled ? notificationTimeBefore : null,
+      'createdBy': user.uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    await FirebaseFirestore.instance.collection('events').add(eventData);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Events")),
+      appBar: AppBar(title: const Text("Events")),
       body: Center(
         child: ElevatedButton(
           onPressed: () => showEventPopup(context),
-          child: Text("Add Event"),
+          child: const Text("Add Event"),
         ),
       ),
     );
