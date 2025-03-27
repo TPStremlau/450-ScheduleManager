@@ -1,50 +1,194 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
-// Day View Scrollable List
-  Widget buildDayView(DateTime date) {
-    String currentDate = DateFormat('MMMM d, yyyy').format(date); // Get formatted date
+import 'package:intl/intl.dart';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
+class DayView extends StatefulWidget {
+  final DateTime date;
+
+  const DayView({super.key, required this.date});
+
+  @override
+  State<DayView> createState() => _DayViewState();
+}
+
+class _DayViewState extends State<DayView> {
+  Map<int, List<Map<String, dynamic>>> eventsByHour = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchEvents();
+  }
+
+  Future<void> fetchEvents() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      // Get events for the selected date 
+      String formattedDate = DateFormat('yyyy-MM-dd').format(widget.date);
+      QuerySnapshot eventSnapshot = await FirebaseFirestore.instance
+          .collection('events')
+          .where('date', isEqualTo: formattedDate)
+          .get();
+
+      Map<int, List<Map<String, dynamic>>> tempEventsByHour = {};
+
+      for (var doc in eventSnapshot.docs) {
+        Map<String, dynamic> eventData = doc.data() as Map<String, dynamic>;
+        DateTime eventDateTime = DateTime.parse(eventData['dateTime']).toLocal();
+        int eventHour = eventDateTime.hour;
+
+        if (!tempEventsByHour.containsKey(eventHour)) {
+          tempEventsByHour[eventHour] = [];
+        }
+        tempEventsByHour[eventHour]!.add(eventData);
+      }
+  //set the state each time we get new events
+      setState(() {
+        eventsByHour = tempEventsByHour;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching events: $e');
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading events: ${e.toString()}')), //show errors
+      );
+    }
+  }
+//build each hour so we can have unlimited events per hour
+  Widget _buildHourTile(int hour) {
+    String timeLabel = DateFormat.jm().format(DateTime(0, 0, 0, hour));
+    bool hasEvents = eventsByHour.containsKey(hour);
+    List<Map<String, dynamic>> hourEvents = hasEvents ? eventsByHour[hour]! : [];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Card(
+        color: Colors.blue[200], //backround color
+        elevation: 2,
+        child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Text(
-            currentDate,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: 24, // 24 hours in a day
-            itemBuilder: (context, index) {
-              String time = DateFormat.jm().format(
-                DateTime(0, 0, 0, index),
-              ); // Format like 12:00 AM
-              return Padding(
-                padding: const EdgeInsets.only(top: 2, bottom: 2),
-                child: ListTile(
-                  title: Text(
-                    time,
-                    style: TextStyle(
-                      color: Colors.black,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    timeLabel,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
-                  subtitle: const Text(
-                    "No Events", // Placeholder for events
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
+                  const Spacer(),
+                  if (hasEvents)
+                    Chip(
+                      label: Text('${hourEvents.length} event(s)', style: TextStyle(color: Colors.black),),
+                      backgroundColor: Colors.white,
                     ),
-                  ),
-                  leading: const Icon(Icons.access_time, color: Colors.black),
-                  tileColor: Colors.blue.shade100,
+                ],
+              ),
+              if (hasEvents) ...[
+                
+                Column(
+                  children: hourEvents.map((event) => _buildEventItem(event)).toList(),
                 ),
-              );
-            },
+              ] else
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'No events scheduled',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+            ],
           ),
+        
         ),
-    ],
+      ),
     );
   }
+
+  Widget _buildEventItem(Map<String, dynamic> event) {
+    DateTime eventTime = DateTime.parse(event['dateTime']).toLocal();
+    
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.event, color: Colors.black),
+      title: Text(
+        event['eventName'],
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(DateFormat.jm().format(eventTime), style: TextStyle(color: Colors.black),),
+          if (event['eventNotes']?.isNotEmpty ?? false)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Text(
+                event['eventNotes'],
+                style: const TextStyle(fontSize: 12, color: Colors.black),
+              ),
+            ),
+        ],
+      ),
+      onTap: () => _showEventDetails(event),
+    );
+  }
+
+  void _showEventDetails(Map<String, dynamic> event) {
+    DateTime eventTime = DateTime.parse(event['dateTime']).toLocal();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(event['eventName']),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Time: ${DateFormat.yMMMd().add_jm().format(eventTime)}'),
+            if (event['eventNotes']?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 16),
+              const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(event['eventNotes']),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(DateFormat('MMMM d, yyyy').format(widget.date)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: fetchEvents,
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: 24,
+              padding: const EdgeInsets.all(8.0),
+              itemBuilder: (context, index) => _buildHourTile(index),
+            ),
+    );
+  }
+}

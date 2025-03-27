@@ -1,8 +1,9 @@
+import 'package:final_project/views/event_set.dart';
 import 'package:flutter/material.dart';
 import 'views/day_view.dart';
-import 'views/month_view.dart';
-import 'views/year_view.dart';
-import 'views/event_set.dart';
+import 'views/month_view.dart'; // Include MonthView and other views as needed
+import 'views/year_view.dart'; // Include YearView and other views as needed
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,7 +14,6 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   String selectedView = "Day"; // Default view is Day View
-  DateTime currentDate = DateTime.now(); // Track current month and year
 
   @override
   Widget build(BuildContext context) {
@@ -94,11 +94,13 @@ class HomePageState extends State<HomePage> {
   Widget _buildCalendarView() {
     switch (selectedView) {
       case "Day":
-        return buildDayView(currentDate);
+        // Pass current date to DayView
+        return DayView(date: DateTime.now()); // Passing current date
       case "Month":
-        return buildMonthView(currentDate);
+        return buildMonthView(DateTime.now()); // buildMonth view
       case "Year":
-        return YearViewPage();
+        return YearViewPage(); // Display the YearView
+
       default:
         return const Text("Select a View");
     }
