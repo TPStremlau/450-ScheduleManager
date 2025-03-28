@@ -112,8 +112,8 @@ Widget buildMonthView(DateTime selectedDate,) {
                               appBar: AppBar(
                                 title: Text(DateFormat.yMMMd().format(DateTime(selectedDate.year, selectedDate.month, day))),
                               ),
-                              body: buildDayView(
-                                DateTime(selectedDate.year, selectedDate.month, day),
+                              body: DayView(
+                                date: DateTime(selectedDate.year, selectedDate.month, day),
                               ),
                             ),
                           ),
