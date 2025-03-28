@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:final_project/edit_events.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -153,7 +154,7 @@ class _DayViewState extends State<DayView> {
 
   void _showEventDetails(Map<String, dynamic> event) {
     DateTime eventTime = DateTime.parse(event['dateTime']).toLocal();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -174,6 +175,21 @@ class _DayViewState extends State<DayView> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateToEditEvent(event);
+            },
+            child: const Text('Edit Event'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _confirmDeleteEvent(event);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete Event'),
           ),
         ],
       ),
@@ -201,4 +217,55 @@ class _DayViewState extends State<DayView> {
             ),
     );
   }
+  void _confirmDeleteEvent(Map<String, dynamic> event) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: Text('Are you sure you want to delete "${event['eventName']}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteEvent(event);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteEvent(Map<String, dynamic> event) async {
+  try {
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(event['eventId']) // Ensure deletion by eventId
+        .delete();
+
+    fetchEvents(); // Refresh event list
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Event deleted successfully')),
+    );
+  } catch (e) {
+    debugPrint('Error deleting event: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error deleting event: ${e.toString()}')),
+    );
+  }
 }
+
+void _navigateToEditEvent(Map<String, dynamic> event) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => EditEvent(event: event)),
+    );
+  }
+}
+
