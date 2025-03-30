@@ -20,6 +20,8 @@ class EventScreenState extends State<EventScreen> {
     TextEditingController eventNotesController = TextEditingController();
     bool notificationsEnabled = false;
     int notificationTimeBefore = 5;
+    bool isRecurring = false;
+    String recurrenceFrequency = 'Daily';
 
     showDialog(
       context: context,
@@ -118,6 +120,31 @@ class EventScreenState extends State<EventScreen> {
                         },
                       ),
 
+                    CheckboxListTile(
+                      title: const Text("Recurring Event"),
+                      value: isRecurring,
+                      onChanged: (value) {
+                        setState(() {
+                          isRecurring = value!;
+                        });
+                      },
+                    ),
+
+                    if (isRecurring)
+                      DropdownButton<String>(
+                        value: recurrenceFrequency,
+                        items: ['Daily', 'Weekly', 'Monthly']
+                            .map((e) => DropdownMenuItem(
+                                value: e, 
+                                child: Text(e)))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            recurrenceFrequency = value!;
+                          });
+                        },
+                      ),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -126,7 +153,7 @@ class EventScreenState extends State<EventScreen> {
                             Navigator.of(context).pop();
                           },
                           style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
+                            backgroundColor: MaterialStateProperty.all(
                                 Colors.blue.shade100),
                           ),
                           child: const Text(
@@ -160,6 +187,8 @@ class EventScreenState extends State<EventScreen> {
                               selectedTime,
                               notificationsEnabled,
                               notificationTimeBefore,
+                              isRecurring,
+                              recurrenceFrequency,
                             );
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -168,7 +197,7 @@ class EventScreenState extends State<EventScreen> {
                             );
                           },
                           style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
+                            backgroundColor: MaterialStateProperty.all(
                                 Colors.blue.shade100),
                           ),
                           child: const Text(
@@ -197,6 +226,8 @@ class EventScreenState extends State<EventScreen> {
     TimeOfDay? time,
     bool notificationsEnabled,
     int notificationTimeBefore,
+    bool isRecurring,
+    String recurrenceFrequency,
   ) async {
     if (eventName.isEmpty || date == null || time == null) {
       return;
@@ -223,6 +254,8 @@ class EventScreenState extends State<EventScreen> {
       'date': DateFormat('yyyy-MM-dd').format(eventDateTime), // Added this line
       'notificationsEnabled': notificationsEnabled,
       'notificationTimeBefore': notificationsEnabled ? notificationTimeBefore : null,
+      'isRecurring': isRecurring,
+      'recurrenceFrequency': isRecurring ? recurrenceFrequency : null,
       'createdBy': user.uid,
       'createdAt': FieldValue.serverTimestamp(),
     };
