@@ -14,12 +14,10 @@ Future<List<DateTime>> getHolidaysForMonth(DateTime selectedDate) async {
       //.where('date', isGreaterThanOrEqualTo: firstOfMonth) // where date is greater than first of month
       //.where('date', isLessThanOrEqualTo: lastOfMonth) // and less than last of month 
       .get(); // get all these dates 
-  print('Snapshot docs: ${snapshot.docs}'); 
   for (var doc in snapshot.docs) { 
     DateTime holidayDate = (doc['date'] as Timestamp).toDate().toLocal(); 
     holidays.add(holidayDate); // add any of these dates to the holidays list
   }
-  print('Holidays for ${selectedDate.month}/${selectedDate.year}: $holidays');
   return holidays;
 }
 
@@ -72,14 +70,10 @@ Widget buildMonthView(DateTime selectedDate,) {
                   return Container();
                 }
                 DateTime currentDay = DateTime(selectedDate.year, selectedDate.month, day);
-                  currentDay = DateTime(currentDay.year, currentDay.month, currentDay.day); 
-                  print('Current day: $currentDay');
-
-                  print('Holidays list: $holidays');  // remove time
+                  currentDay = DateTime(currentDay.year, currentDay.month, currentDay.day);  // remove time
                 bool isHoliday = holidays.any((holiday){
                   holiday = DateTime(holiday.year, holiday.month, holiday.day);
                   return holiday.day == currentDay.day && holiday.month == currentDay.month;});
-                  print('Is holiday: $isHoliday');
                 // Pre-fetch holiday names outside itemBuilder
                 Future<String> getHolidayName() async {
                   if (isHoliday) {
