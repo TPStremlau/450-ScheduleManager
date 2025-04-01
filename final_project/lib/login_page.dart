@@ -1,3 +1,4 @@
+import 'package:final_project/home_page.dart';
 import 'package:final_project/sign_in.dart';
 import 'package:final_project/text_field.dart';
 import 'package:flutter/material.dart';
@@ -26,10 +27,11 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: usernameController.text,
+        email: usernameController.text.trim(),
         password: passwordController.text,
       );
       Navigator.pop(context);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage()));
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);
 
@@ -43,21 +45,38 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void wrongEmailMessage() {
-    showDialog(
-      context: context, 
-      builder: (context) {
-      return const AlertDialog(
-        title: Text('Incorrect Email'),
+  showDialog(
+    context: context, 
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Incorrect Email'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
+        ],
       );
     },
   );
 }
+
   void wrongPasswordMessage() {
-    showDialog(
-      context: context, 
-      builder: (context) {
-        return const AlertDialog(
-          title: Text('Incorrect Password'),
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Incorrect Password'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
+        ],
       );
     },
   );
@@ -77,6 +96,12 @@ class _LoginPageState extends State<LoginPage> {
               style: TextStyle(color: Colors.white),
             ),
           ),
+          actions: [
+            TextButton(onPressed: () {
+              Navigator.pop(context);
+            }, 
+            child: const Text('OK', style: TextStyle(color: Colors.black)))
+          ],
         );
       },
     );
