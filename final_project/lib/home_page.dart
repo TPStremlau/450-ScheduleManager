@@ -1,4 +1,5 @@
 
+import 'package:final_project/login_page.dart';
 import 'package:final_project/views/event_set.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,16 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Schedule Manager")),
+      appBar: AppBar(
+        title: const Text("Schedule Manager"),
+        leading: IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: () async {
+            await FirebaseAuth.instance.signOut();
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> const LoginPage()),);
+          },
+        ),
+      ),
       body: Stack(
         children: [
           Column(
