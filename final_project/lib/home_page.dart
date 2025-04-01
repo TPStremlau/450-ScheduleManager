@@ -1,4 +1,6 @@
+
 import 'package:final_project/views/event_set.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'views/day_view.dart';
 import 'views/month_view.dart'; // Include MonthView and other views as needed
