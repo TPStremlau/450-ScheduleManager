@@ -34,18 +34,37 @@ class _EditEventState extends State<EditEvent> {
   }
 
   Future<void> _updateEvent() async {
-    setState(() => _isSaving = true);
+  setState(() => _isSaving = true);
+
     try {
+      // Convert to UTC ISO string for querying
+      final originalName = widget.event['eventName'];
+      final originalDateTime = widget.event['dateTime'];
+
+      final query = await FirebaseFirestore.instance
+          .collection('events')
+          .where('eventName', isEqualTo: originalName)
+          .where('dateTime', isEqualTo: originalDateTime)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception('Event not found');
+      }
+
+      // Use the first matching doc
+      final docId = query.docs.first.id;
+
       await FirebaseFirestore.instance
           .collection('events')
-          .doc(widget.event['eventId']) // Use the event ID to update
+          .doc(docId)
           .update({
         'eventName': _nameController.text,
         'eventNotes': _notesController.text,
         'dateTime': _selectedDateTime.toUtc().toIso8601String(),
+        'date': DateFormat('yyyy-MM-dd').format(_selectedDateTime),
       });
 
-      Navigator.pop(context); // Go back after saving
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Event updated successfully')),
       );
