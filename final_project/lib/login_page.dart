@@ -19,95 +19,91 @@ class _LoginPageState extends State<LoginPage> {
   void signUserIn() async {
     showDialog(
       context: context,
-      builder: (context) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
+
+    final email = usernameController.text.trim();
+    final password = passwordController.text;
+
+    // Email format validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      Navigator.pop(context);
+      showErrorMessage('Please enter a valid email address.');
+      return;
+    }
 
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: usernameController.text.trim(),
-        password: passwordController.text,
+        email: email,
+        password: password,
       );
+
+      if (!mounted) return;
       Navigator.pop(context);
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);
-
-      if (e.code == 'user-not-found') {
-        wrongEmailMessage();
-      } 
-      else if (e.code == 'wrong-password') {
-        wrongPasswordMessage();
-      }
+      showErrorMessage("incorrect email or password");
     }
   }
 
   void wrongEmailMessage() {
-  showDialog(
-    context: context, 
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Incorrect Email'),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Email not found'),
+        content: const Text('No user found for that email.'),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
             child: const Text('OK'),
           ),
         ],
-      );
-    },
-  );
-}
+      ),
+    );
+  }
 
   void wrongPasswordMessage() {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
         title: const Text('Incorrect Password'),
+        content: const Text('The password you entered is incorrect.'),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
             child: const Text('OK'),
           ),
         ],
-      );
-    },
-  );
-}
-    
-  
+      ),
+    );
+  }
 
   void showErrorMessage(String message) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.amber,
-          title: Center(
-            child: Text(
-              message,              
-              style: TextStyle(color: Colors.white),
-            ),
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.amber,
+        title: Center(
+          child: Text(
+            message,
+            style: const TextStyle(color: Colors.white),
           ),
-          actions: [
-            TextButton(onPressed: () {
-              Navigator.pop(context);
-            }, 
-            child: const Text('OK', style: TextStyle(color: Colors.black)))
-          ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 25),
                 MyTextField(
                   controller: usernameController,
-                  hintText: 'Username',
+                  hintText: 'Email',
                   obscureText: false,
                 ),
                 const SizedBox(height: 10),
@@ -154,7 +150,8 @@ class _LoginPageState extends State<LoginPage> {
                       showDialog(
                         context: context,
                         builder: (context) {
-                          final TextEditingController emailController = TextEditingController();
+                          final TextEditingController emailController =
+                              TextEditingController();
                           return AlertDialog(
                             title: const Text('Reset Password'),
                             content: TextField(
@@ -167,14 +164,17 @@ class _LoginPageState extends State<LoginPage> {
                               TextButton(
                                 onPressed: () async {
                                   try {
-                                    await FirebaseAuth.instance.sendPasswordResetEmail(
+                                    await FirebaseAuth.instance
+                                        .sendPasswordResetEmail(
                                       email: emailController.text.trim(),
                                     );
                                     Navigator.pop(context);
-                                    showErrorMessage('Password reset email sent!');
+                                    showErrorMessage(
+                                        'Password reset email sent!');
                                   } catch (e) {
                                     Navigator.pop(context);
-                                    showErrorMessage('Error: ${e.toString()}');
+                                    showErrorMessage(
+                                        'Error: ${e.toString()}');
                                   }
                                 },
                                 child: const Text('Send'),
@@ -184,7 +184,6 @@ class _LoginPageState extends State<LoginPage> {
                         },
                       );
                     },
-
                     child: const Text(
                       'Forgot password?',
                       style: TextStyle(color: Colors.blue),
@@ -205,7 +204,8 @@ class _LoginPageState extends State<LoginPage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SignUpPage()),
+                          MaterialPageRoute(
+                              builder: (context) => const SignUpPage()),
                         );
                       },
                       child: const Text(
