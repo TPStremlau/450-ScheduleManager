@@ -15,6 +15,7 @@ class YearViewPageState extends State<YearViewPage> {
 
   // Function to update the year
   void _moveYear(int increment) {
+    if (!mounted) return;
     setState(() {
       currentDate = DateTime(currentDate.year + increment, currentDate.month, currentDate.day);
     });

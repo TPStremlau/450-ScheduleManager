@@ -27,6 +27,7 @@ class HomePageState extends State<HomePage> {
           icon: const Icon(Icons.logout),
           onPressed: () async {
             await FirebaseAuth.instance.signOut();
+            if (!mounted) return;
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> const LoginPage()),);
           },
         ),
@@ -48,7 +49,7 @@ class HomePageState extends State<HomePage> {
                         Icons.calendar_today,
                         color: Colors.black,
                       ),
-                      onPressed: () => setState(() => selectedView = "Day"),
+                      onPressed: () =>  setState(() => selectedView = "Day"),
                     ),
                   ),
                   Padding(

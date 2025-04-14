@@ -34,18 +34,20 @@ class _EditEventState extends State<EditEvent> {
   }
 
   Future<void> _updateEvent() async {
-  setState(() => _isSaving = true);
+    if (!mounted) return;
+    setState(() => _isSaving = true);
 
     try {
       // Convert to UTC ISO string for querying
       final originalName = widget.event['eventName'];
       final originalDateTime = widget.event['dateTime'];
 
-      final query = await FirebaseFirestore.instance
-          .collection('events')
-          .where('eventName', isEqualTo: originalName)
-          .where('dateTime', isEqualTo: originalDateTime)
-          .get();
+      final query =
+          await FirebaseFirestore.instance
+              .collection('events')
+              .where('eventName', isEqualTo: originalName)
+              .where('dateTime', isEqualTo: originalDateTime)
+              .get();
 
       if (query.docs.isEmpty) {
         throw Exception('Event not found');
@@ -54,10 +56,7 @@ class _EditEventState extends State<EditEvent> {
       // Use the first matching doc
       final docId = query.docs.first.id;
 
-      await FirebaseFirestore.instance
-          .collection('events')
-          .doc(docId)
-          .update({
+      await FirebaseFirestore.instance.collection('events').doc(docId).update({
         'eventName': _nameController.text,
         'eventNotes': _notesController.text,
         'dateTime': _selectedDateTime.toUtc().toIso8601String(),
@@ -74,6 +73,7 @@ class _EditEventState extends State<EditEvent> {
         SnackBar(content: Text('Error updating event: ${e.toString()}')),
       );
     } finally {
+      if (!mounted) return;
       setState(() => _isSaving = false);
     }
   }
@@ -89,12 +89,14 @@ class _EditEventState extends State<EditEvent> {
     if (pickedDate == null) return;
 
     TimeOfDay? pickedTime = await showTimePicker(
+      
       context: context,
       initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
     );
 
     if (pickedTime == null) return;
 
+    if (!mounted) return;
     setState(() {
       _selectedDateTime = DateTime(
         pickedDate.year,
@@ -125,14 +127,19 @@ class _EditEventState extends State<EditEvent> {
             ),
             const SizedBox(height: 10),
             ListTile(
-              title: Text('Date & Time: ${DateFormat.yMMMd().add_jm().format(_selectedDateTime)}'),
+              title: Text(
+                'Date & Time: ${DateFormat.yMMMd().add_jm().format(_selectedDateTime)}',
+              ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () => _selectDateTime(context),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isSaving ? null : _updateEvent,
-              child: _isSaving ? const CircularProgressIndicator() : const Text('Save Changes'),
+              child:
+                  _isSaving
+                      ? const CircularProgressIndicator()
+                      : const Text('Save Changes'),
             ),
           ],
         ),

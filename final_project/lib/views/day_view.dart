@@ -26,6 +26,7 @@ class _DayViewState extends State<DayView> {
   }
 
   Future<void> fetchEvents() async {
+  if (!mounted) return;
   setState(() => _isLoading = true);
   
   try {
@@ -33,6 +34,7 @@ class _DayViewState extends State<DayView> {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       // Handle case where user is not logged in
+      if (!mounted) return;
       setState(() => _isLoading = false);
       return;
     }
@@ -57,13 +59,14 @@ class _DayViewState extends State<DayView> {
       }
       tempEventsByHour[eventHour]!.add(eventData);
     }
-
+    if (!mounted) return;
     setState(() {
       eventsByHour = tempEventsByHour;
       _isLoading = false;
     });
   } catch (e) {
     debugPrint('Error fetching events: $e');
+    if (!mounted) return;
     setState(() => _isLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error loading events: ${e.toString()}')),
@@ -271,6 +274,7 @@ class _DayViewState extends State<DayView> {
 
     await FirebaseFirestore.instance.collection('events').doc(docId).delete();
 
+    if (!mounted) return;
     fetchEvents(); // Refresh event list
 
     ScaffoldMessenger.of(context).showSnackBar(

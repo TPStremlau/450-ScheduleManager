@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -37,19 +38,23 @@ class EventScreenState extends State<EventScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("Please enter the info below", 
-                        style: TextStyle(fontSize: 15)),
-                    
+                    const Text(
+                      "Please enter the info below",
+                      style: TextStyle(fontSize: 15),
+                    ),
+
                     TextField(
                       controller: eventNameController,
                       decoration: const InputDecoration(
-                          labelText: "Event Name (Required)"),
+                        labelText: "Event Name (Required)",
+                      ),
                     ),
 
                     TextField(
                       controller: eventNotesController,
                       decoration: const InputDecoration(
-                          labelText: "Event Notes (Optional)"),
+                        labelText: "Event Notes (Optional)",
+                      ),
                       maxLines: 2,
                     ),
 
@@ -68,6 +73,7 @@ class EventScreenState extends State<EventScreen> {
                           lastDate: DateTime(2101),
                         );
                         if (pickedDate != null) {
+                          
                           setState(() {
                             selectedDate = pickedDate;
                           });
@@ -88,6 +94,7 @@ class EventScreenState extends State<EventScreen> {
                           initialTime: selectedTime ?? TimeOfDay.now(),
                         );
                         if (picked != null) {
+                          if (!mounted) return;
                           setState(() {
                             selectedTime = picked;
                           });
@@ -99,6 +106,7 @@ class EventScreenState extends State<EventScreen> {
                       title: const Text("Enable Notifications"),
                       value: notificationsEnabled,
                       onChanged: (value) {
+                        if (!mounted) return;
                         setState(() {
                           notificationsEnabled = value!;
                         });
@@ -108,11 +116,15 @@ class EventScreenState extends State<EventScreen> {
                     if (notificationsEnabled)
                       DropdownButton<int>(
                         value: notificationTimeBefore,
-                        items: [5, 10, 15, 30, 60]
-                            .map((e) => DropdownMenuItem(
-                                value: e, 
-                                child: Text("$e minutes before")))
-                            .toList(),
+                        items:
+                            [5, 10, 15, 30, 60]
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text("$e minutes before"),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             notificationTimeBefore = value!;
@@ -124,6 +136,7 @@ class EventScreenState extends State<EventScreen> {
                       title: const Text("Recurring Event"),
                       value: isRecurring,
                       onChanged: (value) {
+                        if (!mounted) return;
                         setState(() {
                           isRecurring = value!;
                         });
@@ -133,12 +146,17 @@ class EventScreenState extends State<EventScreen> {
                     if (isRecurring)
                       DropdownButton<String>(
                         value: recurrenceFrequency,
-                        items: ['Daily', 'Weekly', 'Monthly']
-                            .map((e) => DropdownMenuItem(
-                                value: e, 
-                                child: Text(e)))
-                            .toList(),
+                        items:
+                            ['Daily', 'Weekly', 'Monthly']
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
+                          if (!mounted) return;
                           setState(() {
                             recurrenceFrequency = value!;
                           });
@@ -153,14 +171,16 @@ class EventScreenState extends State<EventScreen> {
                             Navigator.of(context).pop();
                           },
                           style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
-                                Colors.blue.shade100),
+                            backgroundColor: WidgetStateProperty.all(
+                              Colors.blue.shade100,
+                            ),
                           ),
                           child: const Text(
                             "Cancel",
                             style: TextStyle(
-                                color: Colors.black, 
-                                fontWeight: FontWeight.bold),
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         ElevatedButton(
@@ -168,18 +188,20 @@ class EventScreenState extends State<EventScreen> {
                             if (eventNameController.text.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('Event name is required')),
+                                  content: Text('Event name is required'),
+                                ),
                               );
                               return;
                             }
                             if (selectedDate == null || selectedTime == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('Date and time are required')),
+                                  content: Text('Date and time are required'),
+                                ),
                               );
                               return;
                             }
-                            
+
                             await saveEventToFirestore(
                               eventNameController.text,
                               eventNotesController.text,
@@ -193,18 +215,21 @@ class EventScreenState extends State<EventScreen> {
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('Event saved successfully')),
+                                content: Text('Event saved successfully'),
+                              ),
                             );
                           },
                           style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
-                                Colors.blue.shade100),
+                            backgroundColor: WidgetStateProperty.all(
+                              Colors.blue.shade100,
+                            ),
                           ),
                           child: const Text(
                             "Save",
                             style: TextStyle(
-                                color: Colors.black, 
-                                fontWeight: FontWeight.bold),
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -233,6 +258,8 @@ class EventScreenState extends State<EventScreen> {
       return;
     }
 
+    // Get FCM token
+    final fcmToken = await FirebaseMessaging.instance.getToken();
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return;
@@ -253,11 +280,13 @@ class EventScreenState extends State<EventScreen> {
       'dateTime': eventDateTime.toUtc().toIso8601String(),
       'date': DateFormat('yyyy-MM-dd').format(eventDateTime), // Added this line
       'notificationsEnabled': notificationsEnabled,
-      'notificationTimeBefore': notificationsEnabled ? notificationTimeBefore : null,
+      'notificationTimeBefore':
+          notificationsEnabled ? notificationTimeBefore : null,
       'isRecurring': isRecurring,
       'recurrenceFrequency': isRecurring ? recurrenceFrequency : null,
       'createdBy': user.uid,
       'createdAt': FieldValue.serverTimestamp(),
+      'deviceToken': fcmToken,
     };
 
     await FirebaseFirestore.instance.collection('events').add(eventData);

@@ -28,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
     // Email format validation
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(email)) {
+      if (!mounted) return;
       Navigator.pop(context);
       showErrorMessage('Please enter a valid email address.');
       return;
@@ -40,12 +41,14 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (!mounted) return;
+      if (!mounted) return;
       Navigator.pop(context);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       Navigator.pop(context);
       showErrorMessage("incorrect email or password");
     }
@@ -96,6 +99,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         actions: [
           TextButton(
+            
             onPressed: () => Navigator.pop(context),
             child: const Text('OK', style: TextStyle(color: Colors.black)),
           ),
@@ -168,10 +172,12 @@ class _LoginPageState extends State<LoginPage> {
                                         .sendPasswordResetEmail(
                                       email: emailController.text.trim(),
                                     );
+                                    if (!mounted) return;
                                     Navigator.pop(context);
                                     showErrorMessage(
                                         'Password reset email sent!');
                                   } catch (e) {
+                                    if (!mounted) return;
                                     Navigator.pop(context);
                                     showErrorMessage(
                                         'Error: ${e.toString()}');
