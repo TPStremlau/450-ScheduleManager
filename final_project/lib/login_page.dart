@@ -1,5 +1,6 @@
 import 'package:final_project/home_page.dart';
 import 'package:final_project/sign_in.dart';
+import 'package:final_project/sign_up.dart';
 import 'package:final_project/text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -150,8 +151,40 @@ class _LoginPageState extends State<LoginPage> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // Forgot password functionality
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          final TextEditingController emailController = TextEditingController();
+                          return AlertDialog(
+                            title: const Text('Reset Password'),
+                            content: TextField(
+                              controller: emailController,
+                              decoration: const InputDecoration(
+                                hintText: 'Enter your email',
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () async {
+                                  try {
+                                    await FirebaseAuth.instance.sendPasswordResetEmail(
+                                      email: emailController.text.trim(),
+                                    );
+                                    Navigator.pop(context);
+                                    showErrorMessage('Password reset email sent!');
+                                  } catch (e) {
+                                    Navigator.pop(context);
+                                    showErrorMessage('Error: ${e.toString()}');
+                                  }
+                                },
+                                child: const Text('Send'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     },
+
                     child: const Text(
                       'Forgot password?',
                       style: TextStyle(color: Colors.blue),
@@ -168,11 +201,19 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(color: Colors.grey[700]),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Register now',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SignUpPage()),
+                        );
+                      },
+                      child: const Text(
+                        'Register now',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
