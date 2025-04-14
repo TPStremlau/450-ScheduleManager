@@ -87,14 +87,8 @@ Widget buildMonthView(DateTime selectedDate) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Scaffold(
-                          appBar: AppBar(
-                            title: Text(DateFormat.yMMMd().format(currentDay)),
-                          ),
-                          body: DayView(
-                            date: currentDay,
-                          ),
-                        ),
+                        builder: (context) => DayView(date: currentDay,)
+                          ,
                       ),
                     );
                   },
