@@ -245,10 +245,31 @@ class _DayViewState extends State<DayView> {
 
   Future<void> _deleteEvent(Map<String, dynamic> event) async {
   try {
-    await FirebaseFirestore.instance
+    // Get the current user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+
+    final originalName = event['eventName'];
+    final originalDateTime = event['dateTime']; // still in UTC ISO string
+
+    // Query the matching document
+    final query = await FirebaseFirestore.instance
         .collection('events')
-        .doc(event['eventId']) // Ensure deletion by eventId
-        .delete();
+        .where('eventName', isEqualTo: originalName)
+        .where('dateTime', isEqualTo: originalDateTime)
+        .where('createdBy', isEqualTo: user.uid)
+        .get();
+
+    if (query.docs.isEmpty) {
+      throw Exception('Event not found');
+    }
+
+    // Delete the first matching document
+    final docId = query.docs.first.id;
+
+    await FirebaseFirestore.instance.collection('events').doc(docId).delete();
 
     fetchEvents(); // Refresh event list
 
