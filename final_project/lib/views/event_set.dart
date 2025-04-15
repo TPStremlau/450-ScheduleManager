@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -40,14 +39,12 @@ class EventScreenState extends State<EventScreen> {
                       "Please enter the info below",
                       style: TextStyle(fontSize: 15),
                     ),
-
                     TextField(
                       controller: eventNameController,
                       decoration: const InputDecoration(
                         labelText: "Event Name (Required)",
                       ),
                     ),
-
                     TextField(
                       controller: eventNotesController,
                       decoration: const InputDecoration(
@@ -55,7 +52,6 @@ class EventScreenState extends State<EventScreen> {
                       ),
                       maxLines: 2,
                     ),
-
                     ListTile(
                       title: Text(
                         selectedDate == null
@@ -71,14 +67,12 @@ class EventScreenState extends State<EventScreen> {
                           lastDate: DateTime(2101),
                         );
                         if (pickedDate != null) {
-                          
                           setState(() {
                             selectedDate = pickedDate;
                           });
                         }
                       },
                     ),
-
                     ListTile(
                       title: Text(
                         selectedTime == null
@@ -92,75 +86,64 @@ class EventScreenState extends State<EventScreen> {
                           initialTime: selectedTime ?? TimeOfDay.now(),
                         );
                         if (picked != null) {
-                          if (!mounted) return;
                           setState(() {
                             selectedTime = picked;
                           });
                         }
                       },
                     ),
-
                     CheckboxListTile(
                       title: const Text("Enable Notifications"),
                       value: notificationsEnabled,
                       onChanged: (value) {
-                        if (!mounted) return;
                         setState(() {
                           notificationsEnabled = value!;
                         });
                       },
                     ),
-
                     if (notificationsEnabled)
                       DropdownButton<int>(
                         value: notificationTimeBefore,
-                        items:
-                            [5, 10, 15, 30, 60]
-                                .map(
-                                  (e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text("$e minutes before"),
-                                  ),
-                                )
-                                .toList(),
+                        items: [5, 10, 15, 30, 60]
+                            .map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text("$e minutes before"),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (value) {
                           setState(() {
                             notificationTimeBefore = value!;
                           });
                         },
                       ),
-
                     CheckboxListTile(
                       title: const Text("Recurring Event"),
                       value: isRecurring,
                       onChanged: (value) {
-                        if (!mounted) return;
                         setState(() {
                           isRecurring = value!;
                         });
                       },
                     ),
-
                     if (isRecurring)
                       DropdownButton<String>(
                         value: recurrenceFrequency,
-                        items:
-                            ['Daily', 'Weekly', 'Monthly']
-                                .map(
-                                  (e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(e),
-                                  ),
-                                )
-                                .toList(),
+                        items: ['Daily', 'Weekly', 'Monthly']
+                            .map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (value) {
-                          if (!mounted) return;
                           setState(() {
                             recurrenceFrequency = value!;
                           });
                         },
                       ),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -169,7 +152,7 @@ class EventScreenState extends State<EventScreen> {
                             Navigator.of(context).pop();
                           },
                           style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
+                            backgroundColor: MaterialStateProperty.all(
                               Colors.blue.shade100,
                             ),
                           ),
@@ -218,7 +201,7 @@ class EventScreenState extends State<EventScreen> {
                             );
                           },
                           style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
+                            backgroundColor: MaterialStateProperty.all(
                               Colors.blue.shade100,
                             ),
                           ),
@@ -256,14 +239,11 @@ class EventScreenState extends State<EventScreen> {
       return;
     }
 
-    // Get FCM token
-   
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return;
     }
 
-    // Combine Date and Time correctly
     DateTime eventDateTime = DateTime(
       date.year,
       date.month,
@@ -276,7 +256,7 @@ class EventScreenState extends State<EventScreen> {
       'eventName': eventName,
       'eventNotes': eventNotes,
       'dateTime': eventDateTime.toUtc().toIso8601String(),
-      'date': DateFormat('yyyy-MM-dd').format(eventDateTime), // Added this line
+      'date': DateFormat('yyyy-MM-dd').format(eventDateTime),
       'notificationsEnabled': notificationsEnabled,
       'notificationTimeBefore':
           notificationsEnabled ? notificationTimeBefore : null,
@@ -286,7 +266,38 @@ class EventScreenState extends State<EventScreen> {
       'createdAt': FieldValue.serverTimestamp(),
     };
 
+    // Save the initial event
     await FirebaseFirestore.instance.collection('events').add(eventData);
+
+    // Handle recurring events
+    if (isRecurring) {
+      DateTime nextEventDate = eventDateTime;
+
+      // Generate additional events based on recurrence frequency
+      for (int i = 0; i < 4; i++) { // Example: Create 4 additional occurrences
+        if (recurrenceFrequency == 'Daily') {
+          nextEventDate = nextEventDate.add(const Duration(days: 1));
+        } else if (recurrenceFrequency == 'Weekly') {
+          nextEventDate = nextEventDate.add(const Duration(days: 7));
+        } else if (recurrenceFrequency == 'Monthly') {
+          nextEventDate = DateTime(
+            nextEventDate.year,
+            nextEventDate.month + 1,
+            nextEventDate.day,
+            nextEventDate.hour,
+            nextEventDate.minute,
+          );
+        }
+
+        final recurringEventData = {
+          ...eventData,
+          'dateTime': nextEventDate.toUtc().toIso8601String(),
+          'date': DateFormat('yyyy-MM-dd').format(nextEventDate),
+        };
+
+        await FirebaseFirestore.instance.collection('events').add(recurringEventData);
+      }
+    }
   }
 
   @override
