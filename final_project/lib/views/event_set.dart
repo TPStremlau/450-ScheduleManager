@@ -1,6 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
 
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -259,7 +257,7 @@ class EventScreenState extends State<EventScreen> {
     }
 
     // Get FCM token
-    final fcmToken = await FirebaseMessaging.instance.getToken();
+   
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return;
@@ -286,7 +284,6 @@ class EventScreenState extends State<EventScreen> {
       'recurrenceFrequency': isRecurring ? recurrenceFrequency : null,
       'createdBy': user.uid,
       'createdAt': FieldValue.serverTimestamp(),
-      'deviceToken': fcmToken,
     };
 
     await FirebaseFirestore.instance.collection('events').add(eventData);
