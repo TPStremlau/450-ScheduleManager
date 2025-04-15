@@ -128,13 +128,15 @@ Widget buildMonthView(DateTime selectedDate) {
                             style: const TextStyle(fontSize: 16),
                           ),
                           if (isHoliday)
-                            Text(
-                              holidayName ?? 'Holiday',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                            FittedBox(fit: BoxFit.fitWidth,
+                            child: 
+                              Text(
+                                holidayName ?? 'Holiday',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                         ],
                       ),
