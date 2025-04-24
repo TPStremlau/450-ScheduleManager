@@ -104,14 +104,15 @@ class EventScreenState extends State<EventScreen> {
                     if (notificationsEnabled)
                       DropdownButton<int>(
                         value: notificationTimeBefore,
-                        items: [5, 10, 15, 30, 60]
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text("$e minutes before"),
-                              ),
-                            )
-                            .toList(),
+                        items:
+                            [5, 10, 15, 30, 60]
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text("$e minutes before"),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             notificationTimeBefore = value!;
@@ -130,14 +131,15 @@ class EventScreenState extends State<EventScreen> {
                     if (isRecurring)
                       DropdownButton<String>(
                         value: recurrenceFrequency,
-                        items: ['Daily', 'Weekly', 'Monthly']
-                            .map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e),
-                              ),
-                            )
-                            .toList(),
+                        items:
+                            ['Daily', 'Weekly', 'Monthly']
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             recurrenceFrequency = value!;
@@ -264,6 +266,14 @@ class EventScreenState extends State<EventScreen> {
       'recurrenceFrequency': isRecurring ? recurrenceFrequency : null,
       'createdBy': user.uid,
       'createdAt': FieldValue.serverTimestamp(),
+      'notifyAt':
+          notificationsEnabled
+              ? eventDateTime
+                  .subtract(Duration(minutes: notificationTimeBefore))
+                  .toUtc()
+              : null,
+      'notificationSent':
+          false, // ✅ Required for scheduled function to detect it
     };
 
     // Save the initial event
@@ -274,7 +284,8 @@ class EventScreenState extends State<EventScreen> {
       DateTime nextEventDate = eventDateTime;
 
       // Generate additional events based on recurrence frequency
-      for (int i = 0; i < 4; i++) { // Example: Create 4 additional occurrences
+      for (int i = 0; i < 4; i++) {
+        // Example: Create 4 additional occurrences
         if (recurrenceFrequency == 'Daily') {
           nextEventDate = nextEventDate.add(const Duration(days: 1));
         } else if (recurrenceFrequency == 'Weekly') {
@@ -293,9 +304,19 @@ class EventScreenState extends State<EventScreen> {
           ...eventData,
           'dateTime': nextEventDate.toUtc().toIso8601String(),
           'date': DateFormat('yyyy-MM-dd').format(nextEventDate),
+          'notifyAt':
+              notificationsEnabled
+                  ? nextEventDate
+                      .subtract(Duration(minutes: notificationTimeBefore))
+                      .toUtc()
+                  : null,
+          'notificationSent':
+              false, // ✅ Required for scheduled function to detect it
         };
 
-        await FirebaseFirestore.instance.collection('events').add(recurringEventData);
+        await FirebaseFirestore.instance
+            .collection('events')
+            .add(recurringEventData);
       }
     }
   }

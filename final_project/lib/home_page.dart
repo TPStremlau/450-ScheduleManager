@@ -1,4 +1,3 @@
-
 import 'package:final_project/login_page.dart';
 import 'package:final_project/views/event_set.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'views/day_view.dart';
 import 'views/month_view.dart'; // Include MonthView and other views as needed
 import 'views/year_view.dart'; // Include YearView and other views as needed
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,77 +26,85 @@ class HomePageState extends State<HomePage> {
           onPressed: () async {
             await FirebaseAuth.instance.signOut();
             if (!mounted) return;
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> const LoginPage()),);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
           },
         ),
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // Row of buttons for selecting the view
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: _buildGridButton(
-                      context: context,
-                      label: "Day View",
-                      icon: const Icon(
-                        Icons.calendar_today,
-                        color: Colors.black,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(
+              children: [
+                SizedBox(
+                  height: constraints.maxHeight,
+                  width: constraints.maxWidth,
+                  child: Column(
+                    children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            _buildGridButton(
+                              context: context,
+                              label: "Day View",
+                              icon: const Icon(
+                                Icons.calendar_today,
+                                color: Colors.black,
+                              ),
+                              onPressed:
+                                  () => setState(() => selectedView = "Day"),
+                            ),
+                            _buildGridButton(
+                              context: context,
+                              label: "Month View",
+                              icon: const Icon(
+                                Icons.calendar_month,
+                                color: Colors.black,
+                              ),
+                              onPressed:
+                                  () => setState(() => selectedView = "Month"),
+                            ),
+                            _buildGridButton(
+                              context: context,
+                              label: "Year View",
+                              icon: const Icon(
+                                Icons.calendar_today_outlined,
+                                color: Colors.black,
+                              ),
+                              onPressed:
+                                  () => setState(() => selectedView = "Year"),
+                            ),
+                          ],
+                        ),
                       ),
-                      onPressed: () =>  setState(() => selectedView = "Day"),
-                    ),
+                      Expanded(child: _buildCalendarView()),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: _buildGridButton(
-                      context: context,
-                      label: "Month View",
-                      icon: const Icon(
-                        Icons.calendar_month,
-                        color: Colors.black,
-                      ),
-                      onPressed: () => setState(() => selectedView = "Month"),
+                ),
+                Positioned(
+                  bottom: 16.0,
+                  right: 16.0,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      EventScreenState().showEventPopup(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.yellow,
+                      shape: const CircleBorder(),
+                      padding: const EdgeInsets.all(20),
+                      shadowColor: Colors.black,
                     ),
+                    child: const Icon(Icons.add, color: Colors.black, size: 30),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: _buildGridButton(
-                      context: context,
-                      label: "Year View",
-                      icon: const Icon(
-                        Icons.calendar_today_outlined,
-                        color: Colors.black,
-                      ),
-                      onPressed: () => setState(() => selectedView = "Year"),
-                    ),
-                  ),
-                ],
-              ),
-              // Expanded widget for calendar views
-              Expanded(child: _buildCalendarView()),
-            ],
-          ),
-          Positioned(
-            bottom: 16.0,
-            right: 16.0,
-            child: ElevatedButton(
-              onPressed: () {
-                EventScreenState().showEventPopup(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.yellow, // Yellow color for the button
-                shape: CircleBorder(),
-                padding: EdgeInsets.all(20),
-                shadowColor: Colors.black,
-              ),
-              child: Icon(Icons.add, color: Colors.black, size: 30),
-            ),
-          ),
-        ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
