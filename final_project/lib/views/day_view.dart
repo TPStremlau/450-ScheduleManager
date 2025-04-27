@@ -154,6 +154,7 @@ class _DayViewState extends State<DayView> {
         ],
       ),
       onTap: () => _showEventDetails(event),
+      onLongPress: () => _deleteEvent(event),
     );
   }
 
